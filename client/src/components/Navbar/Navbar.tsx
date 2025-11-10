@@ -1,19 +1,6 @@
-// src/components/Navbar.tsx
-import React from "react";
+import { ConnectButton } from "@rainbow-me/rainbowkit";
 
-export type NavbarProps = {
-  /**
-   * Optional wallet element — pass RainbowKit's <ConnectButton /> or any custom button.
-   * If not provided, a placeholder 'Connect Wallet' button is shown.
-   */
-  WalletButton?: React.ReactNode;
-  /**
-   * Optional small element to show to the left of the wallet button (e.g. price ticker)
-   */
-  rightSlot?: React.ReactNode;
-};
-
-export const Navbar: React.FC<NavbarProps> = ({ WalletButton, rightSlot }) => {
+export const Navbar = () => {
   return (
     <header className="w-full bg-gray-900 text-slate-100 border-b border-gray-800">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -30,25 +17,7 @@ export const Navbar: React.FC<NavbarProps> = ({ WalletButton, rightSlot }) => {
             </div>
           </div>
 
-          {/* Right: optional ticker + wallet */}
-          <div className="flex items-center gap-4">
-            {rightSlot ? (
-              <div className="hidden sm:flex items-center">{rightSlot}</div>
-            ) : null}
-
-            <div>
-              {WalletButton ? (
-                WalletButton
-              ) : (
-                <button
-                  className="px-3 py-1 rounded-md bg-slate-800 hover:bg-slate-700 text-sm border border-slate-700"
-                  type="button"
-                >
-                  Connect Wallet
-                </button>
-              )}
-            </div>
-          </div>
+          <ConnectButton />
         </div>
       </div>
     </header>
