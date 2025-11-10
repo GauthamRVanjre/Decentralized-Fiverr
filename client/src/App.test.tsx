@@ -3,5 +3,5 @@ import App from "./App";
 
 test("renders react app", () => {
   render(<App />);
-  expect(screen.getByText(/Hello world!/i)).toBeInTheDocument();
+  expect(screen.getByText(/DecentraFiverr/i)).toBeInTheDocument();
 });

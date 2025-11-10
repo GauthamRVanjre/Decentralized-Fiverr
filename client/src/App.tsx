@@ -1,11 +1,13 @@
 import "./App.css";
+import JobsList from "./components/JobsList/JobsList";
+import Navbar from "./components/Navbar/Navbar";
+import { sampleJobs } from "./types/type";
 
 function App() {
   return (
     <>
-      <h1 className="text-3xl bg-red-500 font-bold underline">
-        Decentralized fiverr
-      </h1>
+      <Navbar />
+      <JobsList jobs={sampleJobs} />
     </>
   );
 }
