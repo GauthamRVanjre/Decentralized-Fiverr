@@ -10,6 +10,7 @@ import { RainbowKitProvider } from "@rainbow-me/rainbowkit";
 
 import { config } from "./Wagmi.ts";
 import { EmeraldTheme } from "./Theme/RainbowKitTheme.ts";
+import { TransactionToastProvider } from "./context/TransactionToastContext";
 
 const queryClient = new QueryClient();
 createRoot(document.getElementById("root")!).render(
@@ -17,7 +18,9 @@ createRoot(document.getElementById("root")!).render(
     <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
         <RainbowKitProvider theme={EmeraldTheme}>
-          <App />
+          <TransactionToastProvider>
+            <App />
+          </TransactionToastProvider>
         </RainbowKitProvider>
       </QueryClientProvider>
     </WagmiProvider>
