@@ -26,13 +26,13 @@ export const JobsList: React.FC<JobsListProps> = ({ jobs, onViewDetails }) => {
   if (!jobs.length) {
     return (
       <div className="text-center text-slate-400 py-20">
-        No jobs found. Create one to get started 💼
+        No jobs found for this filter
       </div>
     );
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 p-4 bg-gray-950 min-h-screen">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
       {jobs.map((job) => (
         <div
           key={job.id}
