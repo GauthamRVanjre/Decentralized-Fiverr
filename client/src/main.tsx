@@ -8,7 +8,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { WagmiProvider } from "wagmi";
 import { RainbowKitProvider } from "@rainbow-me/rainbowkit";
 
-import { config } from "./Wagmi.ts";
+import { config } from "./config/Wagmi.ts";
 import { EmeraldTheme } from "./Theme/RainbowKitTheme.ts";
 import { TransactionToastProvider } from "./context/TransactionToastContext";
 
