@@ -5,10 +5,6 @@ import CreateJobModal from "../CreateJobCard/CreateJobModal";
 
 export const Navbar = () => {
   const [modalOpen, setModalOpen] = useState(false);
-
-  const openModal = () => setModalOpen(true);
-  const closeModal = () => setModalOpen(false);
-
   return (
     <>
       <header className="w-full bg-gray-900 text-slate-100 border-b border-gray-800">

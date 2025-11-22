@@ -1,6 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import PinataUploadButton from "../PinataUploadButton/PinataUploadButton";
 import { useTransactionToast } from "../../context/TransactionToastContext";
+import { useEthtoUsd } from "../../hooks/useUsdtoEth";
+import useDebounce from "../../hooks/useDebounce";
 
 interface CreateJobModalProps {
   open: boolean;
@@ -11,34 +13,33 @@ const CreateJobModal: React.FC<CreateJobModalProps> = ({ open, onClose }) => {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [fileCid, setFileCid] = useState("");
-  const [usdAmount, setUsdAmount] = useState("");
+  const [usdAmount, setUsdAmount] = useState<number>(0);
   const [ethAmount, setEthAmount] = useState("");
   const [loading, setLoading] = useState(false);
-  const [price, setPrice] = useState<number | null>(null);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const { showToast } = useTransactionToast();
+  // debounce USD amount to avoid firing API calls on every keystroke
+  const debouncedUsd = useDebounce<number>(usdAmount, 2000);
 
-  // Example: Replace with real logic
-  const getEthPrice = async () => {
-    // Fetch from Chainlink or API
-    return 2000;
-  };
-  // upload handled by PinataUploadButton; callback sets CID below
-
-  useEffect(() => {
-    if (!open) return;
-    getEthPrice().then(setPrice);
-  }, [open]);
+  const {
+    data: ETHprice,
+    isLoading: ETHloading,
+    isError: ETHerror,
+  } = useEthtoUsd(debouncedUsd);
 
   useEffect(() => {
-    if (price && usdAmount) {
-      const eth = parseFloat(usdAmount) / price;
-      setEthAmount(eth ? eth.toFixed(6) : "");
+    if (
+      ETHprice !== undefined &&
+      ETHprice !== null &&
+      !ETHloading &&
+      !ETHerror
+    ) {
+      setEthAmount(Number(ETHprice).toFixed(6));
     } else {
       setEthAmount("");
     }
-  }, [usdAmount, price]);
+  }, [ETHprice]);
 
   const onUploadComplete = (cid: string) => {
     setFileCid(cid);
@@ -71,7 +72,7 @@ const CreateJobModal: React.FC<CreateJobModalProps> = ({ open, onClose }) => {
         setName("");
         setDescription("");
         setFileCid("");
-        setUsdAmount("");
+        setUsdAmount(0);
         setEthAmount("");
         onClose();
       }, 1500);
@@ -142,19 +143,14 @@ const CreateJobModal: React.FC<CreateJobModalProps> = ({ open, onClose }) => {
                 className="bg-zinc-800 text-white rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 placeholder="USD Amount"
                 type="number"
-                min="0"
+                min={0}
                 value={usdAmount}
-                onChange={(e) => setUsdAmount(e.target.value)}
+                onChange={(e) => setUsdAmount(Number(e.target.value))}
                 required
               />
               <div className="flex items-center gap-2">
                 <span className="text-zinc-300 text-sm">Equivalent ETH:</span>
-                <span className="text-emerald-400 font-mono">
-                  {ethAmount || "--"}
-                </span>
-                <span className="text-zinc-500 text-xs">
-                  @ {price ? `$${price.toFixed(2)}` : "..."}
-                </span>
+                <span className="text-emerald-400 font-mono">{ethAmount}</span>
               </div>
 
               {error && <div className="text-red-400 text-sm">{error}</div>}
