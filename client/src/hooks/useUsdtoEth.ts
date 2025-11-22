@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { getEthForUsd, getUsdForEth } from "../requests/api.requests";
+import { getEthForUsd, getUsdForEth } from "../requests/price.requests";
 
 export function useUsdtoEth() {
   return useQuery({

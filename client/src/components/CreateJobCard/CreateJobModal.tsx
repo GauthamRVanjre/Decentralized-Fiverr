@@ -3,6 +3,7 @@ import PinataUploadButton from "../PinataUploadButton/PinataUploadButton";
 import { useTransactionToast } from "../../context/TransactionToastContext";
 import { useEthtoUsd } from "../../hooks/useUsdtoEth";
 import useDebounce from "../../hooks/useDebounce";
+import { useCreateJob } from "../../hooks/useCreateJob";
 
 interface CreateJobModalProps {
   open: boolean;
@@ -10,8 +11,6 @@ interface CreateJobModalProps {
 }
 
 const CreateJobModal: React.FC<CreateJobModalProps> = ({ open, onClose }) => {
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
   const [fileCid, setFileCid] = useState("");
   const [usdAmount, setUsdAmount] = useState<number>(0);
   const [ethAmount, setEthAmount] = useState("");
@@ -28,6 +27,8 @@ const CreateJobModal: React.FC<CreateJobModalProps> = ({ open, onClose }) => {
     isError: ETHerror,
   } = useEthtoUsd(debouncedUsd);
 
+  const { mutateAsync } = useCreateJob();
+
   useEffect(() => {
     if (
       ETHprice !== undefined &&
@@ -35,7 +36,7 @@ const CreateJobModal: React.FC<CreateJobModalProps> = ({ open, onClose }) => {
       !ETHloading &&
       !ETHerror
     ) {
-      setEthAmount(Number(ETHprice).toFixed(6));
+      setEthAmount(ETHprice);
     } else {
       setEthAmount("");
     }
@@ -48,47 +49,44 @@ const CreateJobModal: React.FC<CreateJobModalProps> = ({ open, onClose }) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    if (!name || !description || !usdAmount || !fileCid || !ethAmount) {
+    if (!usdAmount || !fileCid || !ethAmount) {
       setError("All fields are required and file must be uploaded.");
       return;
     }
+    console.log(fileCid, usdAmount, ethAmount);
     setLoading(true);
-
     try {
       // show pending toast
       showToast({ status: "pending", message: "Creating job on-chain..." });
 
-      // simulate createJob tx — replace with real contract call
-      const fakeTx = await new Promise<string>((res) =>
-        setTimeout(() => res(generateFakeTx()), 1400)
-      );
+      // call createJob and wait for it to complete
+      const result = await mutateAsync({ fileCid, ethAmount });
 
-      // success
-      showToast({ status: "success", txHash: fakeTx, message: "Job created" });
+      // extract txHash from the result
+      const toastTxHash = result?.txHash || result;
+
+      // success - only show after mutation completes
+      showToast({
+        status: "success",
+        txHash: toastTxHash,
+        message: "Job created",
+      });
       setSuccess(true);
 
       setTimeout(() => {
         setSuccess(false);
-        setName("");
-        setDescription("");
         setFileCid("");
         setUsdAmount(0);
         setEthAmount("");
         onClose();
       }, 1500);
     } catch (err) {
+      console.error("Create job error:", err);
       showToast({ status: "error", message: "Failed to create job" });
       setError("Failed to create job.");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
-  };
-
-  // helper: generate fake tx hash
-  const generateFakeTx = () => {
-    const hex = Array.from({ length: 64 })
-      .map(() => Math.floor(Math.random() * 16).toString(16))
-      .join("");
-    return `0x${hex}`;
   };
 
   if (!open) return null;
@@ -118,20 +116,9 @@ const CreateJobModal: React.FC<CreateJobModalProps> = ({ open, onClose }) => {
             </div>
           ) : (
             <>
-              <input
-                className="bg-zinc-800 text-white rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                placeholder="Job Name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-              />
-              <textarea
-                className="bg-zinc-800 text-white rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                placeholder="Description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                required
-              />
+              <span className="text-zinc-300 text-sm">
+                Upload Job description:
+              </span>
               <div>
                 <PinataUploadButton
                   onUploadComplete={onUploadComplete}
