@@ -25,3 +25,16 @@ export const uploadFile = async (file: File) => {
   if (!cid) throw new Error("No CID returned from upload endpoint");
   return cid;
 };
+
+export const getFile = async (cid: string) => {
+  const res = await fetch(
+    `https://api.pinata.cloud/v3/files/public?cid=${cid}`,
+    {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${import.meta.env.VITE_JWT_SECRET_KEY}`,
+      },
+    }
+  );
+  return res.json();
+};

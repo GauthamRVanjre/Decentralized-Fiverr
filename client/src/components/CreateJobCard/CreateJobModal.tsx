@@ -90,6 +90,7 @@ const CreateJobModal: React.FC<CreateJobModalProps> = ({ open, onClose }) => {
   };
 
   if (!open) return null;
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60">
       <div className="bg-zinc-900 rounded-xl shadow-lg p-0 max-w-lg w-full relative">

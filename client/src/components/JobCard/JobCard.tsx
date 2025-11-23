@@ -49,7 +49,7 @@ const JobCard: React.FC<JobCardProps> = ({ job }) => {
         {/* Amount */}
         <div className="my-4">
           <div className="text-slate-400 text-xs mb-1">Amount</div>
-          <div className="font-mono text-slate-100">{job.amountEth} ETH</div>
+          <div className="font-mono text-slate-100">{job.amount} ETH</div>
         </div>
 
         {/* Footer */}
@@ -76,7 +76,7 @@ const JobCard: React.FC<JobCardProps> = ({ job }) => {
           onClose={() => setModalOpen(false)}
           jobId={job.id.toString()}
           jobTitle={`Job #${job.id}`}
-          amount={`${job.amountEth} ETH`}
+          amount={`${job.amount} ETH`}
           workerAddress={job.worker || "-"}
         />
       ) : (
