@@ -79,3 +79,36 @@ export const getJobs = async () => {
 
   return jobs;
 };
+
+export const submitWorkForAJob = async (
+  jobId: number,
+  submissionCID: string
+) => {
+  const txHash = await writeContract(config, {
+    abi: SMART_CONTRACT_ABI,
+    address: SMART_CONTRACT_ADDRESS,
+    functionName: "submitWork",
+    args: [jobId, submissionCID],
+  });
+
+  const receipt = await waitForTransactionReceipt(config, {
+    hash: txHash,
+  });
+
+  return { txHash, receipt };
+};
+
+export const releaseFundsForAJob = async (jobId: number) => {
+  const txHash = await writeContract(config, {
+    abi: SMART_CONTRACT_ABI,
+    address: SMART_CONTRACT_ADDRESS,
+    functionName: "releaseFunds",
+    args: [jobId],
+  });
+
+  const receipt = await waitForTransactionReceipt(config, {
+    hash: txHash,
+  });
+
+  return { txHash, receipt };
+};

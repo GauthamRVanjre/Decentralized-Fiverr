@@ -4,6 +4,7 @@ import { useTransactionToast } from "../../context/TransactionToastContext";
 import { useEthtoUsd } from "../../hooks/useUsdtoEth";
 import useDebounce from "../../hooks/useDebounce";
 import { useCreateJob } from "../../hooks/useCreateJob";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface CreateJobModalProps {
   open: boolean;
@@ -27,7 +28,8 @@ const CreateJobModal: React.FC<CreateJobModalProps> = ({ open, onClose }) => {
     isError: ETHerror,
   } = useEthtoUsd(debouncedUsd);
 
-  const { mutateAsync } = useCreateJob();
+  const { mutateAsync: createJob } = useCreateJob();
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     if (
@@ -60,7 +62,10 @@ const CreateJobModal: React.FC<CreateJobModalProps> = ({ open, onClose }) => {
       showToast({ status: "pending", message: "Creating job on-chain..." });
 
       // call createJob and wait for it to complete
-      const result = await mutateAsync({ fileCid, ethAmount });
+      const result = await createJob({ fileCid, ethAmount });
+
+      // invalidate jobs query
+      queryClient.invalidateQueries({ queryKey: ["jobs"] });
 
       // extract txHash from the result
       const toastTxHash = result?.txHash || result;

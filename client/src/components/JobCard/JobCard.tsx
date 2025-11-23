@@ -20,6 +20,9 @@ const JobCard: React.FC<JobCardProps> = ({ job }) => {
       showToast({ status: "error", message: "Please connect wallet" });
       return;
     }
+
+    if (!isAdmin && job.submissionCID)
+      return showToast({ status: "error", message: "Job already submitted" });
     setModalOpen(true);
   };
 
@@ -72,7 +75,11 @@ const JobCard: React.FC<JobCardProps> = ({ job }) => {
             onClick={handleClick}
             className="text-xs bg-slate-800 hover:bg-slate-700 border border-slate-700 px-3 py-1 rounded-md text-slate-200 transition"
           >
-            {isAdmin ? "Release Funds" : "Submit Work"}
+            {isAdmin && job.submissionCID !== ""
+              ? "Release Funds"
+              : !isAdmin && job.submissionCID
+              ? "Submitted"
+              : "Submit Work"}
           </button>
         </div>
       </div>
@@ -80,7 +87,7 @@ const JobCard: React.FC<JobCardProps> = ({ job }) => {
         <ReleaseFundsModal
           open={modalOpen}
           onClose={() => setModalOpen(false)}
-          jobId={job.id.toString()}
+          jobId={job.id}
           jobTitle={`Job #${job.id}`}
           amount={`${job.amount} ETH`}
           workerAddress={job.worker || "-"}
@@ -89,7 +96,7 @@ const JobCard: React.FC<JobCardProps> = ({ job }) => {
         <SubmitWorkModal
           open={modalOpen}
           onClose={() => setModalOpen(false)}
-          jobId={job.id.toString()}
+          jobId={job.id}
         />
       )}
     </>
