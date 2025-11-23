@@ -107,7 +107,7 @@ const TransactionToast: React.FC<TransactionToastProps> = ({
       : "Transaction failed";
 
   return (
-    <div className="fixed bottom-6 right-6 z-50">
+    <div className="fixed top-6 left-1/2 transform -translate-x-1/2 z-50">
       <div className="max-w-sm w-full bg-zinc-900 border border-zinc-800 rounded-lg shadow-lg overflow-hidden transform transition-all duration-200 ease-out">
         <div className="p-3 flex items-start gap-3">
           <div className="flex-shrink-0">{icon}</div>

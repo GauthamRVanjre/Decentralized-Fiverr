@@ -3,17 +3,23 @@ import { statusColors, type Job } from "../../types/type";
 import SubmitWorkModal from "../SubmitWorkModal/SubmitWorkModal";
 import ReleaseFundsModal from "../ReleaseFundsModal/ReleaseFundsModal";
 import useCurrentUser from "../../hooks/useCurrentUser";
+import { useTransactionToast } from "../../context/TransactionToastContext";
 
 export type JobCardProps = {
   job: Job;
 };
 
 const JobCard: React.FC<JobCardProps> = ({ job }) => {
-  const { isAdmin } = useCurrentUser();
+  const { address, isAdmin } = useCurrentUser();
   const [modalOpen, setModalOpen] = useState(false);
+  const { showToast } = useTransactionToast();
 
   const handleClick = () => {
     // open the appropriate modal depending on whether the logged-in address is admin
+    if (!address) {
+      showToast({ status: "error", message: "Please connect wallet" });
+      return;
+    }
     setModalOpen(true);
   };
 
