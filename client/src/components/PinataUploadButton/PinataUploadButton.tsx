@@ -1,4 +1,5 @@
 import React, { useRef, useState } from "react";
+import { uploadFile } from "../../requests/pinata.requests";
 
 interface PinataUploadButtonProps {
   onUploadComplete: (cid: string) => void;
@@ -11,11 +12,9 @@ interface PinataUploadButtonProps {
 
 const PinataUploadButton: React.FC<PinataUploadButtonProps> = ({
   onUploadComplete,
-  uploadUrl = "/api/pinata/upload",
   buttonText = "Upload",
-  accept = "*",
+  accept = ".pdf,application/pdf",
   disabled = false,
-  extraHeaders,
 }) => {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -34,31 +33,21 @@ const PinataUploadButton: React.FC<PinataUploadButtonProps> = ({
     setFilename(file ? file.name : null);
     if (!file) return;
 
+    // validate PDF only
+    const isPdf =
+      file.type === "application/pdf" ||
+      file.name.toLowerCase().endsWith(".pdf");
+    if (!isPdf) {
+      setError("Only PDF files are allowed. Please select a .pdf file.");
+      return;
+    }
+
     setUploading(true);
     try {
-      const form = new FormData();
-      form.append("file", file);
+      const cid = await uploadFile(file);
 
-      //   const res = await fetch(uploadUrl, {
-      //     method: "POST",
-      //     body: form,
-      //     headers: extraHeaders ?? undefined,
-      //   });
-
-      //   if (!res.ok) {
-      //     const text = await res.text();
-      //     throw new Error(text || `Upload failed with status ${res.status}`);
-      //   }
-
-      //   // Expect response JSON like: { cid: 'Qm...' }
-      //   const data = await res.json();
-      //   const cid = (data && (data.cid || data.IpfsHash || data.hash)) as
-      //     | string
-      //     | undefined;
-      //   if (!cid) throw new Error("No CID returned from upload endpoint");
-
-      setSuccessCid("Qm...");
-      onUploadComplete("Qm...");
+      setSuccessCid(cid);
+      onUploadComplete(cid);
     } catch (err: any) {
       setError(err?.message ?? "Upload failed");
     } finally {

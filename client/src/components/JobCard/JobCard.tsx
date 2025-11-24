@@ -3,17 +3,26 @@ import { statusColors, type Job } from "../../types/type";
 import SubmitWorkModal from "../SubmitWorkModal/SubmitWorkModal";
 import ReleaseFundsModal from "../ReleaseFundsModal/ReleaseFundsModal";
 import useCurrentUser from "../../hooks/useCurrentUser";
+import { useTransactionToast } from "../../context/TransactionToastContext";
 
 export type JobCardProps = {
   job: Job;
 };
 
 const JobCard: React.FC<JobCardProps> = ({ job }) => {
-  const { isAdmin } = useCurrentUser();
+  const { address, isAdmin } = useCurrentUser();
   const [modalOpen, setModalOpen] = useState(false);
+  const { showToast } = useTransactionToast();
 
   const handleClick = () => {
     // open the appropriate modal depending on whether the logged-in address is admin
+    if (!address) {
+      showToast({ status: "error", message: "Please connect wallet" });
+      return;
+    }
+
+    if (!isAdmin && job.submissionCID)
+      return showToast({ status: "error", message: "Job already submitted" });
     setModalOpen(true);
   };
 
@@ -49,24 +58,42 @@ const JobCard: React.FC<JobCardProps> = ({ job }) => {
         {/* Amount */}
         <div className="my-4">
           <div className="text-slate-400 text-xs mb-1">Amount</div>
-          <div className="font-mono text-slate-100">{job.amountEth} ETH</div>
+          <div className="font-mono text-slate-100">{job.amount} ETH</div>
         </div>
 
         {/* Footer */}
         <div className="flex justify-between items-center mt-auto">
-          <a
-            href={`https://gateway.pinata.cloud/ipfs/${job.metadataCID}`}
-            target="_blank"
-            rel="noreferrer"
-            className="text-xs text-emerald-400 hover:underline"
-          >
-            View Metadata
-          </a>
+          <div className="flex justify-between items-center">
+            <a
+              href={`https://gateway.pinata.cloud/ipfs/${job.metadataCID}`}
+              target="_blank"
+              rel="noreferrer"
+              className="text-xs text-emerald-400 hover:underline"
+            >
+              View Metadata
+            </a>
+
+            {/* only show submission if the logged-in user is admin */}
+            {isAdmin && job.submissionCID !== "" && (
+              <a
+                href={`https://gateway.pinata.cloud/ipfs/${job.submissionCID}`}
+                target="_blank"
+                rel="noreferrer"
+                className="text-xs text-emerald-400 hover:underline ml-2"
+              >
+                View Submission
+              </a>
+            )}
+          </div>
           <button
             onClick={handleClick}
             className="text-xs bg-slate-800 hover:bg-slate-700 border border-slate-700 px-3 py-1 rounded-md text-slate-200 transition"
           >
-            {isAdmin ? "Release Funds" : "Submit Work"}
+            {isAdmin && job.submissionCID !== ""
+              ? "Release Funds"
+              : !isAdmin && job.submissionCID
+              ? "Submitted"
+              : "Submit Work"}
           </button>
         </div>
       </div>
@@ -74,16 +101,16 @@ const JobCard: React.FC<JobCardProps> = ({ job }) => {
         <ReleaseFundsModal
           open={modalOpen}
           onClose={() => setModalOpen(false)}
-          jobId={job.id.toString()}
+          jobId={job.id}
           jobTitle={`Job #${job.id}`}
-          amount={`${job.amountEth} ETH`}
+          amount={`${job.amount} ETH`}
           workerAddress={job.worker || "-"}
         />
       ) : (
         <SubmitWorkModal
           open={modalOpen}
           onClose={() => setModalOpen(false)}
-          jobId={job.id.toString()}
+          jobId={job.id}
         />
       )}
     </>

@@ -1,6 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import PinataUploadButton from "../PinataUploadButton/PinataUploadButton";
 import { useTransactionToast } from "../../context/TransactionToastContext";
+import { useEthtoUsd } from "../../hooks/useUsdtoEth";
+import useDebounce from "../../hooks/useDebounce";
+import { useCreateJob } from "../../hooks/useCreateJob";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface CreateJobModalProps {
   open: boolean;
@@ -8,37 +12,37 @@ interface CreateJobModalProps {
 }
 
 const CreateJobModal: React.FC<CreateJobModalProps> = ({ open, onClose }) => {
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
   const [fileCid, setFileCid] = useState("");
-  const [usdAmount, setUsdAmount] = useState("");
+  const [usdAmount, setUsdAmount] = useState<number>(0);
   const [ethAmount, setEthAmount] = useState("");
   const [loading, setLoading] = useState(false);
-  const [price, setPrice] = useState<number | null>(null);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const { showToast } = useTransactionToast();
+  // debounce USD amount to avoid firing API calls on every keystroke
+  const debouncedUsd = useDebounce<number>(usdAmount, 2000);
 
-  // Example: Replace with real logic
-  const getEthPrice = async () => {
-    // Fetch from Chainlink or API
-    return 2000;
-  };
-  // upload handled by PinataUploadButton; callback sets CID below
+  const {
+    data: ETHprice,
+    isLoading: ETHloading,
+    isError: ETHerror,
+  } = useEthtoUsd(debouncedUsd);
+
+  const { mutateAsync: createJob } = useCreateJob();
+  const queryClient = useQueryClient();
 
   useEffect(() => {
-    if (!open) return;
-    getEthPrice().then(setPrice);
-  }, [open]);
-
-  useEffect(() => {
-    if (price && usdAmount) {
-      const eth = parseFloat(usdAmount) / price;
-      setEthAmount(eth ? eth.toFixed(6) : "");
+    if (
+      ETHprice !== undefined &&
+      ETHprice !== null &&
+      !ETHloading &&
+      !ETHerror
+    ) {
+      setEthAmount(ETHprice);
     } else {
       setEthAmount("");
     }
-  }, [usdAmount, price]);
+  }, [ETHprice]);
 
   const onUploadComplete = (cid: string) => {
     setFileCid(cid);
@@ -47,50 +51,51 @@ const CreateJobModal: React.FC<CreateJobModalProps> = ({ open, onClose }) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    if (!name || !description || !usdAmount || !fileCid || !ethAmount) {
+    if (!usdAmount || !fileCid || !ethAmount) {
       setError("All fields are required and file must be uploaded.");
       return;
     }
+    console.log(fileCid, usdAmount, ethAmount);
     setLoading(true);
-
     try {
       // show pending toast
       showToast({ status: "pending", message: "Creating job on-chain..." });
 
-      // simulate createJob tx — replace with real contract call
-      const fakeTx = await new Promise<string>((res) =>
-        setTimeout(() => res(generateFakeTx()), 1400)
-      );
+      // call createJob and wait for it to complete
+      const result = await createJob({ fileCid, ethAmount });
 
-      // success
-      showToast({ status: "success", txHash: fakeTx, message: "Job created" });
+      // invalidate jobs query
+      queryClient.invalidateQueries({ queryKey: ["jobs"] });
+
+      // extract txHash from the result
+      const toastTxHash = result?.txHash || result;
+
+      // success - only show after mutation completes
+      showToast({
+        status: "success",
+        txHash: toastTxHash,
+        message: "Job created",
+      });
       setSuccess(true);
 
       setTimeout(() => {
         setSuccess(false);
-        setName("");
-        setDescription("");
         setFileCid("");
-        setUsdAmount("");
+        setUsdAmount(0);
         setEthAmount("");
         onClose();
       }, 1500);
     } catch (err) {
+      console.error("Create job error:", err);
       showToast({ status: "error", message: "Failed to create job" });
       setError("Failed to create job.");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
-  };
-
-  // helper: generate fake tx hash
-  const generateFakeTx = () => {
-    const hex = Array.from({ length: 64 })
-      .map(() => Math.floor(Math.random() * 16).toString(16))
-      .join("");
-    return `0x${hex}`;
   };
 
   if (!open) return null;
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60">
       <div className="bg-zinc-900 rounded-xl shadow-lg p-0 max-w-lg w-full relative">
@@ -117,20 +122,9 @@ const CreateJobModal: React.FC<CreateJobModalProps> = ({ open, onClose }) => {
             </div>
           ) : (
             <>
-              <input
-                className="bg-zinc-800 text-white rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                placeholder="Job Name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-              />
-              <textarea
-                className="bg-zinc-800 text-white rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                placeholder="Description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                required
-              />
+              <span className="text-zinc-300 text-sm">
+                Upload Job description:
+              </span>
               <div>
                 <PinataUploadButton
                   onUploadComplete={onUploadComplete}
@@ -142,19 +136,14 @@ const CreateJobModal: React.FC<CreateJobModalProps> = ({ open, onClose }) => {
                 className="bg-zinc-800 text-white rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 placeholder="USD Amount"
                 type="number"
-                min="0"
+                min={0}
                 value={usdAmount}
-                onChange={(e) => setUsdAmount(e.target.value)}
+                onChange={(e) => setUsdAmount(Number(e.target.value))}
                 required
               />
               <div className="flex items-center gap-2">
                 <span className="text-zinc-300 text-sm">Equivalent ETH:</span>
-                <span className="text-emerald-400 font-mono">
-                  {ethAmount || "--"}
-                </span>
-                <span className="text-zinc-500 text-xs">
-                  @ {price ? `$${price.toFixed(2)}` : "..."}
-                </span>
+                <span className="text-emerald-400 font-mono">{ethAmount}</span>
               </div>
 
               {error && <div className="text-red-400 text-sm">{error}</div>}

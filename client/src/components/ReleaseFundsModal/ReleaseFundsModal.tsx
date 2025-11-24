@@ -1,10 +1,12 @@
 import React, { useState } from "react";
 import { useTransactionToast } from "../../context/TransactionToastContext";
+import { releaseFundsForAJob } from "../../requests/Jobs.requests";
+import { QueryClient } from "@tanstack/react-query";
 
 interface ReleaseFundsModalProps {
   open: boolean;
   onClose: () => void;
-  jobId: string;
+  jobId: number;
   jobTitle?: string;
   amount?: string;
   workerAddress?: string;
@@ -22,20 +24,21 @@ const ReleaseFundsModal: React.FC<ReleaseFundsModalProps> = ({
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const { showToast } = useTransactionToast();
-
-  // Release funds to worker (simulated). Replace with real contract call using wagmi/ethers.
-  const releaseFunds = async (): Promise<string> => {
-    // simulate tx
-    return new Promise((res) => setTimeout(() => res(generateFakeTx()), 1200));
-  };
+  const queryClient = new QueryClient();
 
   const handleConfirm = async () => {
     setError("");
     setLoading(true);
+
     try {
       showToast({ status: "pending", message: "Releasing funds..." });
-      const tx = await releaseFunds();
-      showToast({ status: "success", txHash: tx, message: "Funds released" });
+      const tx = await releaseFundsForAJob(jobId);
+      queryClient.invalidateQueries({ queryKey: ["jobs"] });
+      showToast({
+        status: "success",
+        txHash: tx.txHash,
+        message: "Funds released",
+      });
       setSuccess(true);
       setTimeout(() => {
         setSuccess(false);
@@ -46,13 +49,6 @@ const ReleaseFundsModal: React.FC<ReleaseFundsModalProps> = ({
       setError("Failed to release funds. Please try again.");
     }
     setLoading(false);
-  };
-
-  const generateFakeTx = () => {
-    const hex = Array.from({ length: 64 })
-      .map(() => Math.floor(Math.random() * 16).toString(16))
-      .join("");
-    return `0x${hex}`;
   };
 
   if (!open) return null;

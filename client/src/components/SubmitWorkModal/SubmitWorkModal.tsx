@@ -1,11 +1,13 @@
 import React, { useState } from "react";
 import PinataUploadButton from "../PinataUploadButton/PinataUploadButton";
 import { useTransactionToast } from "../../context/TransactionToastContext";
+import { submitWorkForAJob } from "../../requests/Jobs.requests";
+import { QueryClient } from "@tanstack/react-query";
 
 interface SubmitWorkModalProps {
   open: boolean;
   onClose: () => void;
-  jobId: string;
+  jobId: number;
 }
 
 const SubmitWorkModal: React.FC<SubmitWorkModalProps> = ({
@@ -18,14 +20,9 @@ const SubmitWorkModal: React.FC<SubmitWorkModalProps> = ({
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const { showToast } = useTransactionToast();
+  const queryClient = new QueryClient();
 
   // Submit work to contract (simulated). Replace with real contract call using wagmi/ethers.
-  const submitWork = async (jobId: string, cid: string): Promise<string> => {
-    console.log("submitWork", jobId, cid);
-    // simulate tx hash
-    return new Promise((res) => setTimeout(() => res(generateFakeTx()), 1200));
-  };
-
   const onUploadComplete = (cid: string) => {
     setFileCid(cid);
   };
@@ -40,8 +37,13 @@ const SubmitWorkModal: React.FC<SubmitWorkModalProps> = ({
     setLoading(true);
     try {
       showToast({ status: "pending", message: "Submitting work..." });
-      const tx = await submitWork(jobId, fileCid);
-      showToast({ status: "success", txHash: tx, message: "Work submitted" });
+      const tx = await submitWorkForAJob(jobId, fileCid);
+      queryClient.invalidateQueries({ queryKey: ["jobs"] });
+      showToast({
+        status: "success",
+        txHash: tx.txHash,
+        message: "Work submitted",
+      });
       setSuccess(true);
       setTimeout(() => {
         setSuccess(false);
@@ -53,13 +55,6 @@ const SubmitWorkModal: React.FC<SubmitWorkModalProps> = ({
       setError("Failed to submit work.");
     }
     setLoading(false);
-  };
-
-  const generateFakeTx = () => {
-    const hex = Array.from({ length: 64 })
-      .map(() => Math.floor(Math.random() * 16).toString(16))
-      .join("");
-    return `0x${hex}`;
   };
 
   if (!open) return null;
