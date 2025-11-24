@@ -63,14 +63,28 @@ const JobCard: React.FC<JobCardProps> = ({ job }) => {
 
         {/* Footer */}
         <div className="flex justify-between items-center mt-auto">
-          <a
-            href={`https://gateway.pinata.cloud/ipfs/${job.metadataCID}`}
-            target="_blank"
-            rel="noreferrer"
-            className="text-xs text-emerald-400 hover:underline"
-          >
-            View Metadata
-          </a>
+          <div className="flex justify-between items-center">
+            <a
+              href={`https://gateway.pinata.cloud/ipfs/${job.metadataCID}`}
+              target="_blank"
+              rel="noreferrer"
+              className="text-xs text-emerald-400 hover:underline"
+            >
+              View Metadata
+            </a>
+
+            {/* only show submission if the logged-in user is admin */}
+            {isAdmin && job.submissionCID !== "" && (
+              <a
+                href={`https://gateway.pinata.cloud/ipfs/${job.submissionCID}`}
+                target="_blank"
+                rel="noreferrer"
+                className="text-xs text-emerald-400 hover:underline ml-2"
+              >
+                View Submission
+              </a>
+            )}
+          </div>
           <button
             onClick={handleClick}
             className="text-xs bg-slate-800 hover:bg-slate-700 border border-slate-700 px-3 py-1 rounded-md text-slate-200 transition"
