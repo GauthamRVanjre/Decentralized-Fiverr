@@ -1,22 +1,18 @@
-import React from "react";
+import { useUsdtoEth } from "../../hooks/useUsdtoEth";
+import Error from "../Error/Error";
+import Loader from "../Loader/Loader";
 
-interface PriceFeedTickerProps {
-  price?: number;
-  loading?: boolean;
-}
+const PriceFeedTicker = () => {
+  const { data: price, isLoading, isError } = useUsdtoEth();
 
-const PriceFeedTicker: React.FC<PriceFeedTickerProps> = ({
-  price = 123.45,
-  loading,
-}) => {
   return (
     <span className="inline-block min-w-[120px] px-4 py-1 rounded-full bg-emerald-500 text-white font-semibold text-base shadow-md text-center">
-      {loading ? (
-        <span className="inline-block h-8 w-full rounded-full from-emerald-100 via-emerald-200 to-emerald-100 animate-pulse" />
-      ) : price !== undefined ? (
-        `1 ETH = $${price.toFixed(2)}`
+      {isLoading ? (
+        <Loader />
+      ) : isError ? (
+        <Error message="Error fetching ETH price" />
       ) : (
-        "—"
+        `1 ETH = $${price}`
       )}
     </span>
   );

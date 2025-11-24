@@ -2,13 +2,11 @@ import { useState } from "react";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import PriceFeedTicker from "../PriceFeedTicker/PriceFeedTicker";
 import CreateJobModal from "../CreateJobCard/CreateJobModal";
+import useCurrentUser from "../../hooks/useCurrentUser";
 
 export const Navbar = () => {
   const [modalOpen, setModalOpen] = useState(false);
-
-  const openModal = () => setModalOpen(true);
-  const closeModal = () => setModalOpen(false);
-
+  const { isAdmin } = useCurrentUser();
   return (
     <>
       <header className="w-full bg-gray-900 text-slate-100 border-b border-gray-800">
@@ -27,12 +25,14 @@ export const Navbar = () => {
             </div>
             <div className="flex items-center gap-4">
               <PriceFeedTicker />
-              <button
-                className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-4 py-1 rounded-full shadow transition"
-                onClick={() => setModalOpen(true)}
-              >
-                Create Job
-              </button>
+              {isAdmin && (
+                <button
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-4 py-1 rounded-full shadow transition"
+                  onClick={() => setModalOpen(true)}
+                >
+                  Create Job
+                </button>
+              )}
               <ConnectButton />
             </div>
           </div>
