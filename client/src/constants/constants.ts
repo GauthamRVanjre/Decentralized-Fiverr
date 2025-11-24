@@ -306,3 +306,5 @@ export const SMART_CONTRACT_ABI = [
     type: "function",
   },
 ];
+
+export const PINATA_FILE_UPLOAD_URL = "https://uploads.pinata.cloud/v3/files";
