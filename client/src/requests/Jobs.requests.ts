@@ -9,7 +9,6 @@ import {
 } from "../constants/constants";
 import { config } from "../config/Wagmi";
 import { formatEther, parseEther } from "viem";
-import { getFile } from "./pinata.requests";
 import type { Job } from "../types/type";
 
 export type createJobParams = {
