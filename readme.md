@@ -6,6 +6,12 @@ A Web3 freelance marketplace with smart-contract escrow on Ethereum Sepolia. Cli
 
 The frontend and contract address are configured for Sepolia. The demo URL is listed for exploration; a complete live transaction flow has not been verified for this documentation update.
 
+## Application overview
+
+![DecentraFiverr interface with wallet controls, job creation, status and amount filters, and job cards](docs/images/marketplace-overview.png)
+
+Interface overview with sample job data on Sepolia.
+
 ## How it works
 
 1. Connect a Sepolia wallet using RainbowKit.
