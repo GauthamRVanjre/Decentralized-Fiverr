@@ -1,212 +1,96 @@
-# 🪙 **DecentraFiverr — A decentralized way to hire freelancers in a trustless way**
+# DecentraFiverr
 
-DecentraFiverr is an on-chain freelance marketplace built using Solidity smart contracts and IPFS/Pinata. It enables clients to create jobs, fund them in ETH, and securely release payments once freelancers submit deliverables — without any intermediaries or centralized control.
+A Web3 freelance marketplace with smart-contract escrow on Ethereum Sepolia. Clients create and fund jobs with test ETH, freelancers submit work through IPFS, and clients approve payment release through the contract.
 
----
+[Demo](https://decentralized-fiverr-fawn.vercel.app/) · [Escrow contract source](smart_contract/DevFiverr.sol)
 
-## 🚀 **Table of Contents**
+The frontend and contract address are configured for Sepolia. The demo URL is listed for exploration; a complete live transaction flow has not been verified for this documentation update.
 
-- [About the Project](#about-the-project)
-- [Features](#features)
-- [Tech Stack](#tech-stack)
-- [Smart Contract Overview](#smart-contract-overview)
-- [Architecture](#architecture)
-- [Screenshots--Demo](#screenshots--demo)
-- [Getting Started](#getting-started)
-- [Environment Variables](#environment-variables)
-- [Deployment](#deployment)
-- [Future Improvements](#future-improvements)
-- [Contributing](#contributing)
-- [License](#license)
+## How it works
 
----
+1. Connect a Sepolia wallet using RainbowKit.
+2. Create a job, upload its requirements and metadata through Pinata, and deposit test ETH into the escrow contract.
+3. A freelancer uploads a deliverable and records its CID on-chain.
+4. The job poster reviews the submission and calls `releaseFunds`.
+5. The contract checks the caller and job state, marks the job completed, and transfers the escrowed ETH to the recorded worker.
 
-## 📌 **About the Project**
+The contract holds deposited funds and enforces settlement rules without a marketplace operator holding the payment. Release still requires the job poster's approval: this is client-approved escrow, not automatic verification of work quality.
 
-DecentraFiverr reimagines freelance marketplaces using smart contracts and decentralized storage.  
-Clients post jobs and fund them in ETH. Freelancers upload their work to IPFS and submit it on-chain. Funds are released through a trustless escrow contract — ensuring transparency, automation, and censorship resistance.
+## Stack and architecture
 
----
+| Responsibility | Technology |
+| --- | --- |
+| Interface | React, TypeScript, Vite, Tailwind CSS |
+| Wallet connection | RainbowKit, wagmi |
+| Contract reads, writes, and transaction receipts | viem, wagmi |
+| Job-query caching and background refetching | TanStack Query |
+| Payment custody and job state | Solidity escrow contract |
+| Requirements, metadata, and deliverables | IPFS through Pinata |
+| USD-to-ETH conversion | Chainlink ETH/USD price feed |
+| Frontend hosting | Vercel |
 
-## ✨ **Features**
+The browser reads job records from the contract and retrieves associated files through Pinata. Contract records contain addresses, payment amounts, job state, and content identifiers; uploaded documents remain off-chain.
 
-### 🔹 Core Features
+## Engineering decisions
 
-- Create on-chain jobs funded with ETH
-- Upload job requirements to Pinata (IPFS)
-- Fetch and display metadata using metadata CID
-- Freelancers submit deliverables stored on IPFS
-- Poster releases escrowed funds securely
-- Job list with real-time contract reads
-- Clean and responsive dark UI
+- **Contract-held escrow:** job funding and payment release are contract transactions. The contract permits only the job poster to release payment, requires a submitted worker, and prevents repeated completion. This removes platform custody while retaining client approval.
+- **Content identifiers instead of on-chain files:** requirements and submissions are uploaded through Pinata, with CIDs recorded in the contract. This keeps document bytes out of contract storage, while depending on continued content availability.
+- **Separate query and transaction flows:** TanStack Query caches job reads, while write helpers wait for transaction receipts before returning. A wallet accepting a request is distinct from the transaction being mined.
 
-### 🔹 Smart Contract Features
+## Run the frontend
 
-- Trustless escrow for payments
-- Mapping-based job registry
-- Chainlink ETH/USD price feed
-- Safe ETH transfers using `call()`
-- Metadata CID stored on-chain
+Prerequisites: an active Node.js LTS release with npm, a compatible wallet, a Reown project ID for RainbowKit, and Sepolia test ETH for transactions.
 
-### 🔹 UX / Frontend Features
-
-- React + Tailwind dark UI
-- TanStack Query for caching + background refetching
-- wagmi & viem for contract reads/writes
-- RainbowKit wallet connection
-- Automatic conversion of USD → ETH via Chainlink
-
----
-
-## 🛠️ **Tech Stack**
-
-### **Smart Contract**
-
-- Solidity
-- Remix (deployment & testing)
-- Chainlink Price Feeds
-- OpenZeppelin Contracts
-
-### **Frontend**
-
-- React
-- TypeScript
-- Tailwind CSS
-- wagmi + viem
-- RainbowKit
-- TanStack Query
-
-### **Storage**
-
-- Pinata (v3 API Groups)
-- IPFS (file + JSON uploads)
-
-### **Deployment**
-
-- **Frontend**: Vercel
-- **Smart Contract**: ETH Sepolia
-- **zkSync**: Coming Soon
-
----
-
-## 🔐 **Smart Contract Overview**
-
-The contract manages:
-
-- Job creation (with metadata CID + ETH funding)
-- Work submission (CID of deliverable)
-- Releasing escrowed funds
-- Chainlink ETH/USD price feed logic
-- Storage of job state in a mapping
-
-**Contract Name:** `DecentraFiverrEscrow`  
-**Language:** Solidity 0.8.x  
-**Deployment:** ETH Sepolia via Remix
-
----
-
-## 🏗 **Architecture**
-
-### **1. Frontend (React)**
-
-1. Uses **Wagmi + Viem** to read/write smart contract data
-2. Uses **TanStack Query** for caching, refetching, and background updates
-3. Handles **Pinata uploads** for job requirements and work submissions
-4. Fetches **job metadata JSON** stored on IPFS
-5. Renders UI components such as:
-   - Job cards
-   - Modals (Create Job, Submit Work)
-   - Filters and job listings
-
----
-
-### **2. Smart Contract (Solidity)**
-
-1. Defines a `Job` struct for storing all job-related data
-2. Stores jobs using `mapping(uint256 => Job)`
-3. Implements `createJob(cid)` to create and fund jobs
-4. Implements `submitWork(jobId, submissionCID)` to submit deliverables
-5. Implements `releaseFunds(jobId)` to release escrowed ETH to the worker
-
----
-
-### **3. Storage Layer (Pinata / IPFS)**
-
-1. Stores **job metadata JSON** (title, description, attachment CID, USD amount, timestamp)
-2. Stores **job attachments** such as:
-   - PDF requirement files
-   - Images (PNG/JPG)
-   - Text instructions
-   - Any client-uploaded asset
-
----
-
-## 🖼 **Screenshots / Demo**
-
-> Add your UI screenshots here:
-
-```md
-![Jobs List](./screenshots/jobs-list.png)
-![Create Job Modal](./screenshots/create-job.png)
-![Submit work](./screenshots/job-details.png)
-![Release Funds](./screenshots/job-details.png)
+```sh
+git clone https://github.com/GauthamRVanjre/Decentralized-Fiverr.git
+cd Decentralized-Fiverr/client
+npm ci
 ```
 
-## ⚙️ Getting Started
+Create `client/.env` relative to the repository root. The current source reads these names:
 
-1. Clone the repo
+| Variable | Purpose | Exposure |
+| --- | --- | --- |
+| `VITE_RAINBOWKIT_PROJECT_ID` | Reown project ID used by RainbowKit | Browser-visible identifier |
+| `VITE_ADMIN_ADDRESS` | Optional wallet address for frontend admin presentation | Public address; not contract authorization |
+| `VITE_JWT_SECRET_KEY` | Pinata bearer token used by the existing upload and file-query helpers | Sensitive value exposed by the current browser implementation |
 
-```
-git clone https://github.com/yourusername/decentrafiverr.git
-cd client
-```
+The first two variables are public configuration. Allowlist the deployed domain in the Reown dashboard.
 
-2. Install dependencies
+**Pinata implementation limitation:** `client/src/requests/pinata.requests.ts` sends the Pinata token from browser code. Putting it in a Vite environment file does not keep its value private. Do not supply a private account token to a public build. A server-issued signed upload URL and server-side authenticated file queries are the recommended replacement; that server flow is not implemented in this repository.
 
-```
-npm install
-```
+See [Vite environment-variable exposure](https://vite.dev/guide/env-and-mode) and [Pinata client-side uploads](https://docs.pinata.cloud/files/uploading-files#client-side-uploads). The frontend can start without a Pinata token, but the existing authenticated upload and metadata-query operations will not work.
 
-3. Start development server
-
-```
+```sh
 npm run dev
 ```
 
-🔑 Environment Variables
+Build and static checks, as defined in `client/package.json`:
 
-Create a .env file:
-
-```
-VITE_PINATA_KEY=your_pinata_key
-VITE_PINATA_SECRET=your_pinata_secret
-VITE_JWT_SECRET_KEY=your_pinata_jwt
-VITE_SMART_CONTRACT_ADDRESS=your_contract_address
+```sh
+npm run build
+npm run lint
 ```
 
-🚀 Deployment
+These commands are available in the repository; they were not executed during this documentation review. Test scripts are present, but no test suite is committed in the current tree.
 
-```
-Smart Contract
+## Contract configuration
 
-Deploy on Remix → Injected Provider (MetaMask)
+The frontend's contract address and ABI are in `client/src/constants/constants.ts`. The configured Sepolia address is:
 
-Select ETH Sepolia testnet
-
-Copy deployed contract address into .env
+```text
+0x325d3bfd4b9bd5538df80a2f9a8d520d07eed4b0
 ```
 
-🔮 Future Improvements
+Changing a Vite environment variable alone does not change that address. A new deployment requires updating the constants and ABI.
 
-1. zkSync native deployment
+The Solidity source is in `smart_contract/DevFiverr.sol`; this repository does not include a pinned contract build or deployment toolchain. Its OpenZeppelin imports and constructor use version-specific conventions that need to be aligned before compiling a fresh deployment.
 
-2. Full multi-chain job creation
+## Scope
 
-3. Full fledged Authentication
-
-4. Rating system for freelancers
-
-🤝 Contributing
-
-Contributions, issues, and feature requests are welcome!
-Feel free to open a PR or create an issue.
+- Sepolia demonstration using test ETH, not a production payments service.
+- No dispute resolution, escrow refund, or deadline-based release path is implemented.
+- The first accepted submission records the worker; there is no separate freelancer-selection transaction.
+- The current `createJob` check allows zero-value deposits.
+- Price conversion exists in the contract, but it does not enforce a minimum job payment.
+- The browser-side Pinata credential flow needs replacement before a public build can keep that credential private.
