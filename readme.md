@@ -2,7 +2,7 @@
 
 A Web3 freelance marketplace with smart-contract escrow on Ethereum Sepolia. Clients create and fund jobs with test ETH, freelancers submit work through IPFS, and clients approve payment release through the contract.
 
-[Demo](https://decentralized-fiverr-fawn.vercel.app/) · [Escrow contract source](smart_contract/DevFiverr.sol)
+[Demo](https://decentralized-fiverr-iota.vercel.app/) · [Escrow contract source](smart_contract/DevFiverr.sol)
 
 The frontend and contract address are configured for Sepolia. The demo URL is listed for exploration; a complete live transaction flow has not been verified for this documentation update.
 
